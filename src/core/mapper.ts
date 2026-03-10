@@ -22,12 +22,6 @@ export async function mapProject(rootPath: string, options: ScanOptions): Promis
     '**/.cache/**',
     '**/tmp/**',
     '**/.tmp/**',
-    '**/src/**',
-    '**/lib/**',
-    '**/bin/**',
-    '**/test/**',
-    '**/tests/**',
-    '**/__tests__/**',
     '**/.uncloak/**'
   ];
 

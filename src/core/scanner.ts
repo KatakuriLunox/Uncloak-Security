@@ -12,6 +12,7 @@ import { NetworkDetector } from '../detectors/network';
 import { BackdoorDetector } from '../detectors/backdoor';
 import { logger } from '../utils/logger';
 import * as fs from 'fs';
+import * as fsPromises from 'fs/promises';
 
 const CONFIG_FILES = [
   'package.json',
@@ -88,7 +89,7 @@ export async function runScanners(projectMap: ProjectMap, options: ScanOptions):
       }
       
       try {
-        const content = fs.readFileSync(file.path, 'utf-8');
+        const content = await fsPromises.readFile(file.path, 'utf-8');
         const findings = await detector.scan(file, content);
         allFindings.push(...findings);
       } catch (error) {

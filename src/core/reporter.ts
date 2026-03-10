@@ -1,5 +1,4 @@
 import { ScanResult, Severity } from '../types';
-import { table } from 'table';
 
 const severityColors: Record<Severity, (str: string) => string> = {
   critical: (s) => `\x1b[31m${s}\x1b[0m`,
@@ -17,12 +16,15 @@ const severityIcons: Record<Severity, string> = {
   info: '⚪'
 };
 
+function truncateCode(code: string, maxLength: number = 80): string {
+  if (code.length <= maxLength) return code;
+  return code.substring(0, maxLength - 3) + '...';
+}
+
 export function report(result: ScanResult, options: { output?: string; severity?: string }): void {
   if (options.output === 'json' || options.output === 'sarif') {
     return;
   }
-
-  console.log('\n');
   
   if (result.findings.length === 0) {
     console.log('\n✅ No security issues found!\n');
@@ -45,7 +47,9 @@ export function report(result: ScanResult, options: { output?: string; severity?
     for (const finding of findings) {
       console.log(`   ${severityColors[finding.severity]('⚠')} ${finding.title}`);
       console.log(`   → ${finding.file}${finding.line ? `:${finding.line}` : ''}`);
-      console.log(`   ${finding.message}`);
+      if (finding.code) {
+        console.log(`   ${severityColors[finding.severity]('│')} ${truncateCode(finding.code)}`);
+      }
       console.log('');
     }
   }
