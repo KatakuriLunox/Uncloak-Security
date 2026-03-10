@@ -32,7 +32,7 @@ Thank you for your interest in contributing to Uncloak!
 
 ```bash
 # Clone your fork
-git clone https://github.com/YOUR_USERNAME/Uncloak-Security.git
+git clone https://github.com/KatakuriLunox/Uncloak-Security.git
 cd Uncloak-Security
 
 # Install dependencies
