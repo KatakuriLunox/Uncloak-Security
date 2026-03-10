@@ -1,11 +1,11 @@
-# 🔍 Uncloak
+# uncloak-security
 
-**Security scanner for AI-generated & vibe-coded projects.**
+A security scanner for AI-generated and "vibe-coded" projects.
 
-Vibe coding is great — until your AI writes code that leaks your API keys, opens SQL injection holes, or executes shell commands with user input. Uncloak catches all of that before it reaches production.
+AI coding tools like Cursor, Copilot, and ChatGPT write code fast — but they also make consistent, predictable security mistakes. Uncloak catches those mistakes before they reach production.
 
 ```bash
-npm install -g uncloak
+npm install -g uncloak-security
 uncloak scan ./your-project
 ```
 
@@ -14,27 +14,26 @@ uncloak scan ./your-project
 ## Demo
 
 ```
-🔍 Uncloak Security Scanner v1.0.0
+Uncloak Security Scanner v2.2.0
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ✓ Found 4 files (JSON: 3, JavaScript: 1)
 
-🔴 CRITICAL: 10 issues
-   ⚠ Hardcoded Stripe API Key → test.js:4
-   ⚠ JWT Secret Hardcoded → test.js:42
-   ⚠ SQL Injection - String Concatenation → test.js:9
-   ⚠ XSS - innerHTML assignment → test.js:14
-   ⚠ Eval with User Input → test.js:17
-   ⚠ Path Traversal → test.js:21
-   ⚠ Authentication Bypass → test.js:38
+CRITICAL: 10 issues
+   ⚠ Hardcoded Stripe API Key    → src/api.js:4
+   ⚠ JWT Secret Hardcoded        → src/api.js:42
+   ⚠ SQL Injection               → src/db.js:9
+   ⚠ XSS - innerHTML assignment  → src/ui.js:14
+   ⚠ Eval with User Input        → src/utils.js:17
+   ⚠ Path Traversal              → src/files.js:21
+   ⚠ Authentication Bypass       → src/auth.js:38
 
-🟠 HIGH: 5 issues
-   ⚠ MD5 Usage → test.js:26
-   ⚠ Infinite Loop → test.js:29
-   ⚠ Data Leakage to AI API → test.js:52
-   ...
+HIGH: 5 issues
+   ⚠ MD5 Usage              → src/crypto.js:26
+   ⚠ Infinite Loop          → src/worker.js:29
+   ⚠ Data Leakage to AI API → src/ai.js:52
 
-📊 Summary: 19 issues found
-   Critical: 10 | High: 5 | Medium: 4
+Summary: 15 issues found
+   Critical: 10 | High: 5
    Scan completed in 79ms
 ```
 
@@ -42,52 +41,62 @@ uncloak scan ./your-project
 
 ## Why Uncloak?
 
-AI coding tools like Cursor, Copilot, and ChatGPT write code fast — but they also make consistent, predictable security mistakes:
+AI coding assistants write code quickly, but they tend to repeat the same security mistakes:
 
-- Hardcoding API keys and secrets
-- Building SQL queries with string concatenation
+- Hardcoding API keys and secrets directly in source files
+- Building SQL queries using string concatenation
 - Passing user input directly to shell commands
-- Using broken crypto like MD5
-- Sending sensitive data to external AI APIs
+- Using weak or broken cryptography like MD5
+- Sending sensitive data to external AI APIs without sanitization
 
-Existing scanners weren't built with AI-generated code patterns in mind. Uncloak was.
+Most existing security scanners weren't designed with AI-generated code patterns in mind. Uncloak is.
 
 ---
 
-## What it catches
+## What It Catches
 
-### 🔴 Critical
+### Critical
 | Check | What it detects |
 |---|---|
-| Hardcoded Secrets | API keys, Stripe keys, JWT secrets |
-| SQL Injection | String concatenation in queries |
-| XSS | Unescaped user input in innerHTML |
-| Command Injection | User input passed to exec() |
-| Eval with User Input | Dynamic code execution |
-| Path Traversal | `../` patterns in file paths |
-| Authentication Bypass | Conditionals that always return true |
+| Hardcoded Secrets | API keys, Stripe keys, JWT secrets, tokens |
+| SQL Injection | String concatenation or template literals in queries |
+| XSS | Unescaped user input in innerHTML or dangerouslySetInnerHTML |
+| Command Injection | User input passed to exec(), spawn(), or similar |
+| Eval with User Input | Dynamic code execution using eval() or Function() |
+| Path Traversal | `../` patterns in file read/write operations |
+| Authentication Bypass | Conditionals that always evaluate to true |
+| Backdoors | Reverse shells, encoded commands, suspicious eval patterns |
 
-### 🟠 High
+### High
 | Check | What it detects |
 |---|---|
-| Weak Cryptography | MD5, SHA1 for passwords |
-| Infinite Loops | while(true) with no exit |
-| Data Leakage to AI | Sensitive data sent to external models |
-| Hardcoded Passwords | Credentials in variable names |
+| Weak Cryptography | MD5, SHA1, DES, RC4 usage |
+| Infinite Loops | `while(true)` without proper exit conditions |
+| Data Leakage to AI | Sensitive data sent to external AI APIs |
+| Hardcoded Passwords | Credentials assigned directly to variables |
+| Certificate Verification Disabled | `rejectUnauthorized: false` in HTTPS calls |
+| CORS Wildcard | `Access-Control-Allow-Origin: *` in responses |
 
-### 🟡 Medium
+### Medium
 | Check | What it detects |
 |---|---|
-| Silent Catch Blocks | Errors being swallowed silently |
-| Uncleared Intervals | setInterval without clearInterval |
-| Missing Timeouts | HTTP requests with no timeout |
-| Unrestricted File Read | Unvalidated file paths |
+| Silent Catch Blocks | Empty catch blocks that swallow errors |
+| Uncleared Intervals | `setInterval` without a corresponding `clearInterval` |
+| Missing Request Timeouts | HTTP requests with no timeout set |
+| Unrestricted File Read | File reads without path validation |
+
+### Low / Info
+| Check | What it detects |
+|---|---|
+| Hardcoded IP Addresses | IP addresses that should be in config |
+| TODO / FIXME Comments | Unresolved code notes |
+| Console Logs | Debug statements left in production code |
 
 ---
 
 ## The VGUARD Standard
 
-Uncloak introduces a lightweight declaration standard. Annotate your files with what they're allowed to do — Uncloak verifies the code actually respects those declarations.
+Uncloak supports a simple annotation system. Add a comment at the top of a file to declare what it is allowed to do — Uncloak verifies the code actually respects those declarations.
 
 ```js
 // VGUARD: no-network
@@ -96,73 +105,19 @@ Uncloak introduces a lightweight declaration standard. Annotate your files with 
 // VGUARD: no-eval
 ```
 
-If the code violates its own declarations, Uncloak flags it. Intent vs behavior — a new approach to code safety.
+If the code violates its own declarations, Uncloak flags it as a finding. This makes intent explicit and easy to audit.
 
 ---
 
 ## Supported Languages
 
-- JavaScript (`.js`)
+- JavaScript (`.js`, `.mjs`, `.cjs`)
 - TypeScript (`.ts`, `.tsx`)
 - JSX (`.jsx`)
 - Python (`.py`)
 - Go (`.go`)
 - Rust (`.rs`)
-
----
-
-## Usage
-
-```bash
-# Scan a project
-uncloak scan ./my-project
-
-# Scan a single file
-uncloak scan ./src/api.js
-
-# Strict mode — exit code 1 on any critical issue (great for CI)
-uncloak scan ./my-project --strict
-
-# Generate a VGUARD declaration block
-uncloak init
-
-# JSON output for CI/CD
-uncloak scan ./my-project --output json
-
-# Only critical issues
-uncloak scan ./my-project --severity critical
-
-# Verbose output
-uncloak scan ./my-project --verbose
-```
-
-### CLI Options
-
-```bash
-uncloak scan [path] [options]
-
-Options:
-  -o, --output <format>   Output format: cli, json, sarif (default: cli)
-  -s, --severity <level>  Minimum severity: critical, high, medium, low, info
-  -v, --verbose           Enable verbose output
-  --skip-deps            Skip dependency vulnerability scanning
-  --skip-secrets         Skip secrets scanning
-  --skip-unsafe          Skip unsafe patterns scanning
-  --skip-network         Skip network activity scanning
-  --skip-backdoor        Skip backdoor detection
-  --include <patterns>   File patterns to include (comma-separated)
-  --exclude <patterns>  File patterns to exclude (comma-separated)
-```
-
-### CI/CD Integration
-
-```yaml
-# GitHub Actions
-- name: Security Scan
-  run: |
-    npm install -g uncloak
-    uncloak scan . --severity critical
-```
+- HTML, CSS, SQL, Shell scripts, and more
 
 ---
 
@@ -170,15 +125,65 @@ Options:
 
 ```bash
 # Install globally
-npm install -g uncloak
+npm install -g uncloak-security
 
-# Or use without installing
-npx uncloak scan
+# Or run without installing
+npx uncloak-security scan ./my-project
 ```
 
-### Configuration
+---
 
-Create an `uncloak.config.json` in your project root:
+## Usage
+
+```bash
+# Scan the current directory
+uncloak scan .
+
+# Scan a specific folder
+uncloak scan ./src
+
+# Scan a single file
+uncloak scan ./src/api.js
+
+# Only show critical and high severity issues
+uncloak scan . --severity high
+
+# Output results as JSON (useful for CI/CD pipelines)
+uncloak scan . --output json
+
+# Show detailed output for each finding
+uncloak scan . --verbose
+
+# Generate a config file in the current directory
+uncloak init
+```
+
+### All Options
+
+```
+uncloak scan [path] [options]
+
+Options:
+  -o, --output <format>    Output format: cli, json, sarif     (default: cli)
+  -s, --severity <level>   Minimum severity level to show      (default: low)
+                           Levels: critical, high, medium, low, info
+  -v, --verbose            Show extra detail for each finding
+  --skip-deps              Skip dependency vulnerability scanning
+  --skip-secrets           Skip secrets and credential scanning
+  --skip-unsafe            Skip unsafe code pattern scanning
+  --skip-network           Skip network activity scanning
+  --skip-backdoor          Skip backdoor detection
+  --include <patterns>     Only scan files matching these patterns (comma-separated)
+  --exclude <patterns>     Skip files matching these patterns (comma-separated)
+  -h, --help               Show help
+  -V, --version            Show version number
+```
+
+---
+
+## Configuration File
+
+Create an `uncloak.config.json` in your project root to set default options:
 
 ```json
 {
@@ -186,11 +191,16 @@ Create an `uncloak.config.json` in your project root:
   "exclude": ["**/node_modules/**", "**/dist/**"],
   "severity": "low",
   "output": "cli",
-  "verbose": false
+  "verbose": false,
+  "skipDependencies": false,
+  "skipSecrets": false,
+  "skipUnsafe": false,
+  "skipNetwork": false,
+  "skipBackdoor": false
 }
 ```
 
-Or generate one automatically:
+Generate this file automatically with:
 
 ```bash
 uncloak init
@@ -198,24 +208,56 @@ uncloak init
 
 ---
 
-## Built with
+## CI/CD Integration
+
+### GitHub Actions
+
+```yaml
+- name: Run Uncloak Security Scan
+  run: |
+    npm install -g uncloak-security
+    uncloak scan . --severity critical
+```
+
+This exits with code 1 if any critical issues are found, which will fail the pipeline automatically.
+
+### SARIF Output (GitHub Code Scanning)
+
+```yaml
+- name: Run Uncloak Security Scan
+  run: uncloak scan . --output sarif > results.sarif
+
+- name: Upload SARIF results
+  uses: github/codeql-action/upload-sarif@v2
+  with:
+    sarif_file: results.sarif
+```
+
+---
+
+## How It Works
+
+1. **Maps your project** — finds all relevant files based on your include/exclude patterns
+2. **Runs detectors** — each detector scans file content using regex patterns and AST analysis
+3. **Deduplicates findings** — merges duplicate findings at the same file and line
+4. **Filters by severity** — only shows findings at or above your chosen severity level
+5. **Reports results** — outputs to CLI, JSON, or SARIF format
+
+Your code never leaves your machine. Everything runs locally.
+
+---
+
+## Built With
 
 - TypeScript
-- Zero heavy dependencies
-- Runs entirely locally — your code never leaves your machine
+- Minimal dependencies — `@babel/parser`, `chalk`, `commander`, `fast-glob`, `ora`, `table`
+- Runs entirely locally — no telemetry, no uploads
 
 ---
 
 ## Contributing
 
-Contributions welcome. Adding a new rule is as simple as adding a file to `src/detectors/`.
-
-1. Fork the repo
-2. Add your detector in `src/detectors/`
-3. Test with `npm run build && npm start`
-4. Open a PR
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to add new detectors, report bugs, and submit pull requests.
 
 ---
 
@@ -225,4 +267,4 @@ MIT
 
 ---
 
-<p align="center">Built from scratch by <a href="https://github.com/KatakuriLunox">KatakuriLunox</a></p>
+<p align="center">Built by <a href="https://github.com/KatakuriLunox">KatakuriLunox</a></p>

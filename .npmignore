@@ -1,0 +1,27 @@
+# Source files — only the compiled dist/ is needed
+src/
+
+# Config and dev files
+tsconfig.json
+.eslintrc*
+.prettierrc*
+jest.config*
+*.test.ts
+*.spec.ts
+
+# Dev/local files
+.env
+.env.*
+*.log
+*.tgz
+
+# Git
+.git/
+.gitignore
+
+# Editor
+.vscode/
+.idea/
+
+# Coverage and test output
+coverage/

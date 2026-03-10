@@ -10,7 +10,7 @@ import { version } from '../../package.json';
 export async function scan(options: ScanOptions): Promise<void> {
   const startTime = Date.now();
   
-  logger.header(`🔍 Uncloak Security Scanner v${version}`);
+  logger.header(`Uncloak Security Scanner v${version}`);
   logger.subHeader('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   
   if (options.verbose) {

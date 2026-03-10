@@ -8,7 +8,7 @@ export function createCLI(): Command {
 
   program
     .name('uncloak')
-    .description('Security auditing CLI - finds vulnerabilities, code issues, backdoors, and malicious activity')
+    .description('Security scanner for AI-generated and vibe-coded projects — finds secrets, injection attacks, weak crypto, backdoors, and more')
     .version(version);
 
   program
@@ -43,7 +43,7 @@ export function createCLI(): Command {
 
   program
     .command('init')
-    .description('Initialize uncloak configuration')
+    .description('Initialize an uncloak.config.json in the current directory')
     .action(async () => {
       await init();
     });
