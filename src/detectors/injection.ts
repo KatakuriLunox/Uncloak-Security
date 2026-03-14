@@ -9,12 +9,6 @@ interface InjectionPattern {
 
 const INJECTION_PATTERNS: InjectionPattern[] = [
   {
-    name: 'SQL Injection - String Concatenation',
-    regex: /(?:SELECT|INSERT|UPDATE|DELETE|DROP|UNION|CREATE|ALTER)\s+.*\+\s*|["'].*["']\s*\+\s*(?:req|request|body|params|query|user)/gi,
-    severity: 'critical',
-    message: 'SQL query built using string concatenation. Use parameterized queries instead.'
-  },
-  {
     name: 'SQL Injection - Template Literal',
     regex: /`.*(?:SELECT|INSERT|UPDATE|DELETE|DROP|UNION).*\$\{/gi,
     severity: 'critical',
@@ -88,6 +82,9 @@ const INJECTION_PATTERNS: InjectionPattern[] = [
   }
 ];
 
+const SQL_KEYWORDS = /\b(SELECT|INSERT|UPDATE|DELETE|FROM|WHERE|JOIN|DROP|ALTER|UNION|CREATE)\b/i;
+const STRING_CONCAT = /['"`]\s*\+\s*\w+|\w+\s*\+\s*['"`]/;
+
 export class InjectionDetector implements Detector {
   name = 'Injection Attacks';
   description = 'Detects SQL injection, XSS, command injection, and path traversal vulnerabilities';
@@ -112,6 +109,26 @@ export class InjectionDetector implements Detector {
           message: pattern.message,
           file: file.relativePath,
           line: lineNumber,
+          code: line.trim().substring(0, 100),
+          detector: 'Injection Attacks'
+        });
+      }
+    }
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const hasSQL = SQL_KEYWORDS.test(line);
+      const hasConcat = STRING_CONCAT.test(line);
+
+      if (hasSQL && hasConcat) {
+        findings.push({
+          id: 'injection-sql-injection-string-concatenation',
+          type: 'unsafe',
+          severity: 'critical',
+          title: 'SQL Injection - String Concatenation',
+          message: 'SQL query built using string concatenation. Use parameterized queries instead.',
+          file: file.relativePath,
+          line: i + 1,
           code: line.trim().substring(0, 100),
           detector: 'Injection Attacks'
         });

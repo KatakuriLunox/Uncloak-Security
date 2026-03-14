@@ -39,12 +39,6 @@ const AUTH_PATTERNS: AuthPattern[] = [
     message: 'Route without explicit authentication middleware. Ensure access is properly controlled.'
   },
   {
-    name: 'Authentication Bypass',
-    regex: /(?:return\s+true|if\s*\(\s*true\s*\)|if\s*\(\s*1\s*\))/gi,
-    severity: 'critical',
-    message: 'Potential authentication bypass detected. Conditional that always returns true.'
-  },
-  {
     name: 'JWT Secret Hardcoded',
     regex: /(?:jwt|JWT)\s*\.?\s*(?:secret|key)\s*[=:]\s*["']([^"'\s]{8,})["']/gi,
     severity: 'critical',
@@ -82,6 +76,23 @@ const AUTH_PATTERNS: AuthPattern[] = [
   }
 ];
 
+const AUTH_FUNCTION_PATTERN = /\b(auth|login|verify|isAdmin|hasPermission|checkAccess|validate|authenticate|isLoggedIn|isAuthorized)\b/i;
+
+const AUTH_BYPASS_REGEX = /(?:return\s+true|if\s*\(\s*true\s*\)|if\s*\(\s*1\s*\))/gi;
+
+function getContainingFunctionName(lines: string[], lineIndex: number): string {
+  for (let i = lineIndex; i >= 0; i--) {
+    const line = lines[i];
+    const fnMatch = line.match(/function\s+(\w+)/);
+    if (fnMatch) return fnMatch[1];
+    const arrowFnMatch = line.match(/(\w+)\s*[=:]\s*(?:async\s*)?\(/);
+    if (arrowFnMatch) return arrowFnMatch[1];
+    const methodMatch = line.match(/(\w+)\s*\(.*\)\s*(?::\s*\w+)?\s*\{/);
+    if (methodMatch) return methodMatch[1];
+  }
+  return '';
+}
+
 export class AuthDetector implements Detector {
   name = 'Authentication & Authorization';
   description = 'Detects authentication issues, hardcoded credentials, and authorization bypasses';
@@ -104,6 +115,27 @@ export class AuthDetector implements Detector {
           severity: pattern.severity,
           title: pattern.name,
           message: pattern.message,
+          file: file.relativePath,
+          line: lineNumber,
+          code: line.trim().substring(0, 100),
+          detector: 'Authentication & Authorization'
+        });
+      }
+    }
+
+    let match;
+    while ((match = AUTH_BYPASS_REGEX.exec(content)) !== null) {
+      const lineNumber = content.substring(0, match.index).split('\n').length;
+      const line = lines[lineNumber - 1] || '';
+      const fnName = getContainingFunctionName(lines, lineNumber - 1);
+      
+      if (AUTH_FUNCTION_PATTERN.test(fnName)) {
+        findings.push({
+          id: 'auth-authentication-bypass',
+          type: 'unsafe',
+          severity: 'critical',
+          title: 'Authentication Bypass',
+          message: 'Potential authentication bypass detected. Conditional that always returns true.',
           file: file.relativePath,
           line: lineNumber,
           code: line.trim().substring(0, 100),

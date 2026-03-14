@@ -51,12 +51,6 @@ const BACKDOOR_PATTERNS: BackdoorPattern[] = [
     description: 'Remote code download and execution detected.'
   },
   {
-    name: 'Suspicious XOR',
-    regex: /\^\s*[\d"'][^;]{10,}/g,
-    severity: 'high',
-    description: 'XOR obfuscation detected - common in malware.'
-  },
-  {
     name: 'Hardcoded Port',
     regex: /listen\s*\(\s*(\d{4,5})\s*\)/g,
     severity: 'medium',
@@ -118,6 +112,15 @@ const BACKDOOR_PATTERNS: BackdoorPattern[] = [
   }
 ];
 
+const XOR_OPERATOR = /\w+\s*\^\s*\w+/;
+
+function removeRegexAndComments(line: string): string {
+  let cleaned = line.replace(/\/\/.*$/, '');
+  cleaned = cleaned.replace(/\/[^\/\n]+\/[gimsuy]*/g, '""');
+  cleaned = cleaned.replace(/"[^"]*"|'[^']*'|`[^`]*`/g, '""');
+  return cleaned;
+}
+
 export class BackdoorDetector implements Detector {
   name = 'Backdoor Detection';
   description = 'Detects known malicious patterns, backdoors, and attack vectors';
@@ -146,6 +149,28 @@ export class BackdoorDetector implements Detector {
           message: pattern.description,
           file: file.relativePath,
           line: lineNumber,
+          code: line.trim().substring(0, 100),
+          detector: 'Backdoor Detection',
+          recommendation: 'Review this code carefully. If not intentional, remove immediately.'
+        });
+      }
+    }
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const cleaned = removeRegexAndComments(line);
+      if (XOR_OPERATOR.test(cleaned)) {
+        if (file.relativePath.includes('node_modules') || file.relativePath.includes('.git')) {
+          continue;
+        }
+        findings.push({
+          id: 'backdoor-suspicious-xor',
+          type: 'backdoor',
+          severity: 'high',
+          title: 'Suspicious XOR',
+          message: 'XOR obfuscation detected - common in malware.',
+          file: file.relativePath,
+          line: i + 1,
           code: line.trim().substring(0, 100),
           detector: 'Backdoor Detection',
           recommendation: 'Review this code carefully. If not intentional, remove immediately.'
