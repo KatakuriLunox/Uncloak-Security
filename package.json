@@ -1,6 +1,6 @@
 {
   "name": "uncloak-security",
-  "version": "2.2.0",
+  "version": "2.3.1",
   "description": "Security scanner for AI-generated and vibe-coded projects. Detects secrets, injection attacks, weak crypto, backdoors, and more.",
   "main": "dist/index.js",
   "bin": {

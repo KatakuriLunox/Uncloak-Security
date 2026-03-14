@@ -82,8 +82,8 @@ const INJECTION_PATTERNS: InjectionPattern[] = [
   }
 ];
 
-const SQL_KEYWORDS = /\b(SELECT|INSERT|UPDATE|DELETE|FROM|WHERE|JOIN|DROP|ALTER|UNION|CREATE)\b/i;
-const STRING_CONCAT = /['"`]\s*\+\s*\w+|\w+\s*\+\s*['"`]/;
+const SQL_QUERY = /\b(SELECT|INSERT|UPDATE|DELETE)\b.{0,50}\b(FROM|INTO|SET|WHERE)\b/i;
+const CONCAT = /['"`]\s*\+\s*\w+|\w+\s*\+\s*['"`]/;
 
 export class InjectionDetector implements Detector {
   name = 'Injection Attacks';
@@ -117,8 +117,8 @@ export class InjectionDetector implements Detector {
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      const hasSQL = SQL_KEYWORDS.test(line);
-      const hasConcat = STRING_CONCAT.test(line);
+      const hasSQL = SQL_QUERY.test(line);
+      const hasConcat = CONCAT.test(line);
 
       if (hasSQL && hasConcat) {
         findings.push({
